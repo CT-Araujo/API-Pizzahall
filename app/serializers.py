@@ -40,7 +40,13 @@ class ClienteSerializers(serializers.Serializer):
         
         user.save()
         return user
+    
 class PatchCliente(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = '__all__'
+        
+        
+class LoginSerializers(serializers.Serializer):
+    email = serializers.CharField(max_length = 100)
+    password = serializers.CharField()

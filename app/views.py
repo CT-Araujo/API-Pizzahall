@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import ClienteSerializers, PatchCliente
+from .serializers import ClienteSerializers, PatchCliente, LoginSerializers
 from .models import Cliente, User
 from .validators import CheckPassword, get_tokens_for_user, CheckCpf
 
@@ -89,3 +89,32 @@ class ClienteViews(APIView):
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        
+class LoginView(APIView):
+    def post(self, request):
+        serializers = LoginSerializers(data = request.data)
+        if serializers.is_valid():
+            email = serializers.validated_data.get('email')
+            password = serializers.validated_data.get('password')
+            
+            
+            try:
+                user = User.objects.get(email = email)
+            
+            except ObjectDoesNotExist:
+                return Response({"Message":"Usuário não cadastrado no nosso sistema."}, status = status.HTTP_404_NOT_FOUND)
+            
+            login = authenticate(username = email, password = password)
+            if login:
+                token = get_tokens_for_user(login)
+                
+                dados = {
+                    'token': token['access'],
+                    'id': user.id
+                }
+                
+                return Response(dados, status = status.HTTP_200_OK)
+            return Response({'Message':'Erro na autenticação'}, status.HTTP_401_UNAUTHORIZED)
+        return Response(serializers.error_messages, status = status.HTTP_400_BAD_REQUEST)
+    
