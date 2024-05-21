@@ -9,7 +9,8 @@ from rest_framework import status
 
 class UserManager(BaseUserManager):
     def create_user(self, email, isCliente, isGoogle, googleId, password):
-        fields =  ['email', 'isCliente', 'isGoogle', 'googleId', 'password']
+        fields =  [email, isCliente, isGoogle, password]
+            
         
         for f in fields:
             if f is None or f == '':
@@ -40,8 +41,15 @@ class User (AbstractBaseUser, PermissionsMixin):
 class Cliente(models.Model):
     id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key = True)
     nome = models.CharField(max_length = 100, blank = False, null = False,)
-    telefone = models.CharField(max_length= 11, unique = True, blank = True, null = True)
+    telefone = models.CharField(max_length= 11, unique = False, blank = True, null = True)
     dataNasc = models.DateField(null = True, blank = True)
-    cpf = models.CharField(max_length = 14, unique = True, blank = True)
+    cpf = models.CharField(max_length = 14, unique = False, blank = True,null = True, default = None)
     
     
+class Pizzarias(models.Model):
+    id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key = True)
+    nome = models.CharField(max_length = 50, blank = False, null = False)
+    status = models.CharField(max_length = 20, default = 'Fechado')
+    telefone = models.CharField(max_length = 11, unique = False, blank = False, null = False )
+    cnpj = models.CharField(max_length = 14, unique = False, blank = True, null = False, default = None)
+    horario = models.CharField(max_length = 100, blank = True, null = True)

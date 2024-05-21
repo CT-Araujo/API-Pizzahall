@@ -4,9 +4,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import ClienteSerializers, PatchCliente, LoginSerializers
-from .models import Cliente, User
-from .validators import CheckPassword, get_tokens_for_user, CheckCpf
+from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias
+from .models import Cliente, User, Pizzarias
+from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj
 
 class ClienteViews(APIView):    
     def get(self, request):
@@ -23,6 +23,7 @@ class ClienteViews(APIView):
                 "cpf": cliente.cpf,
                 "dataNasc": cliente.dataNasc 
             }
+            
             
             return Response(dados, status = status.HTTP_200_OK)
     
@@ -68,9 +69,9 @@ class ClienteViews(APIView):
             try:
                 user = Cliente.objects.get(id = id)
             except ObjectDoesNotExist:
-                return Response({"Message":"Usuário não encontrado"}, status = status.HTTP_404_NOT_FOUND)
+                return Response({"Message":"Usuário base não encontrado"}, status = status.HTTP_404_NOT_FOUND)
                 
-            serializers = PatchCliente(user, data = request.data, partial  = True)
+            serializers = PatchUsuarios(user, data = request.data, partial  = True)
             if serializers.is_valid():
                 telefone = serializers.validated_data.get('telefone')
                 if CheckCpf(serializers.validated_data.get('cpf')) == True:
@@ -89,7 +90,8 @@ class ClienteViews(APIView):
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////      
         
 class LoginView(APIView):
     def post(self, request):
@@ -117,4 +119,78 @@ class LoginView(APIView):
                 return Response(dados, status = status.HTTP_200_OK)
             return Response({'Message':'Erro na autenticação'}, status.HTTP_401_UNAUTHORIZED)
         return Response(serializers.error_messages, status = status.HTTP_400_BAD_REQUEST)
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+class PizzariasViews(APIView):
+    def post(self, request):
+        serializer = PizzariaSerializers(data = request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+            cnpj = serializer.validated_data['cnpj']
+            telefone = serializer.validated_data['telefone'] # Será usado para validar o telefone informado pelo usuário.
+            
+            if CheckPassword(password).status_code == 200:
+                if Check_cnpj(cnpj):
+                    new = serializer.create(serializer.validated_data)
+                    
+                    if new:
+                        try:
+                            user = User.objects.get(email = email)
+                        except ObjectDoesNotExist:
+                            return Response({"Message":"Usuário base não encontrado"}, status = status.HTTP_400_BAD_REQUEST)
+                        
+                        newPizzaria = Pizzarias.objects.create(
+                            id = user,
+                            nome = serializer.validated_data['nome'],
+                            telefone = serializer.validated_data['telefone'],
+                            cnpj = serializer.validated_data['cnpj']
+                        )
+                        
+                        newPizzaria.save()
+                        if newPizzaria:
+                            login = authenticate(username = email, password = password)
+                            token = get_tokens_for_user(login)
+                            dados = {
+                                "id": user.id,
+                                "token": token['access']
+                            }
+                            
+                            return Response(dados, status = status.HTTP_200_OK)
+                return Response({"Message":"CNPJ informado não é vaálido"}, status = status.HTTP_400_BAD_REQUEST)
+            return Response(CheckPassword(password), status = status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.error_messages, status = status.HTTP_400_BAD_REQUEST)
     
+    
+    def patch(self, request):
+        filtro = request.query_params.get('id', None)
+        
+        if filtro:
+            try:
+                user = User.objects.get(id = filtro)
+                pizzaria = Pizzarias.objects.get(id_id = filtro)    
+            except ObjectDoesNotExist:
+                return Response({"Message": "Usuário não encontrado."}, status = status.HTTP_404_NOT_FOUND)
+            
+            serializer = PacthPizzarias(data = request.data)
+            if serializer.is_valid():
+                email = serializer.validated_data.get('email')
+                if email is not None and email != "":
+                    if User.objects.filter(email = email).exists():
+                        return Response({"Message":"Email já cadastrado no banco de dados."}, status = status.HTTP_404_NOT_FOUND)
+                    user.email = email
+                    user.save()
+                    
+                patching = PacthPizzarias(pizzaria, data = request.data, partial = True)
+                if patching.is_valid():
+                    patching.save()
+                    return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
+                return Response(patching.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"Message":"Filtro inválido ou não informado."}, status = status.HTTP_400_BAD_REQUEST)
+            
+            
+            
