@@ -23,8 +23,7 @@ class ClienteViews(APIView):
                 "cpf": cliente.cpf,
                 "dataNasc": cliente.dataNasc 
             }
-            
-            
+    
             return Response(dados, status = status.HTTP_200_OK)
     
     def post(self, request):
@@ -64,22 +63,47 @@ class ClienteViews(APIView):
     
     
     def patch(self, request):
-        if request.method == 'PATCH':
-            id = request.query_params.get('id', None)
-            try:
-                user = Cliente.objects.get(id = id)
-            except ObjectDoesNotExist:
-                return Response({"Message":"Usuário base não encontrado"}, status = status.HTTP_404_NOT_FOUND)
-                
-            serializers = PatchUsuarios(user, data = request.data, partial  = True)
-            if serializers.is_valid():
-                telefone = serializers.validated_data.get('telefone')
-                if CheckCpf(serializers.validated_data.get('cpf')) == True:
-                    serializers.save()
-                    return Response(serializers.data, status = status.HTTP_200_OK)
-                return Response({"Message":"O CPF informado não é válido."}, status = status.HTTP_400_BAD_REQUEST)
-            return Response(serializers.errors, status = status.HTTP_400_BAD_REQUEST)
+        filtro = request.query_params.get('id', None)
         
+        if filtro:
+            try:
+                user = User.objects.get(id = filtro)
+                pizzaria = Cliente.objects.get(id_id = filtro)    
+            except ObjectDoesNotExist:
+                return Response({"Message": "Usuário não encontrado."}, status = status.HTTP_404_NOT_FOUND)
+            
+            serializer = PatchUsuarios(data = request.data)
+            
+            if serializer.is_valid():
+                email = serializer.validated_data.get('email')
+                
+                if email is not None and email != "":
+                    if User.objects.filter(email = email).exists():
+                        return Response({"Message":"Email já cadastrado no banco de dados."}, status = status.HTTP_404_NOT_FOUND)
+                    
+                    user.email = email
+                    user.save()
+                    
+                patching = PatchUsuarios(pizzaria, data = request.data, partial = True)
+                if patching.is_valid():
+                    cpf = serializer.validated_data.get('cpf')
+                    if cpf != None and cpf != "":
+                        if CheckCpf(cpf):
+                            
+                            if Cliente.objects.filter(cpf = cpf).exists():
+                                return Response({"Message":"CPF já em uso."}, status = status.HTTP_400_BAD_REQUEST)
+                            else:
+                                patching.save()
+                            return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
+                        
+                        return Response({"Message":"CPF inválido"}, status = status.HTTP_400_BAD_REQUEST)
+                    patching.save()
+                    return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
+                return Response(patching.errors, status = status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"Message":"Filtro inválido ou não informado."}, status = status.HTTP_400_BAD_REQUEST)
+    
              
     # FUNÇÃO APÉNAS PARA A PRODUÇÃO POR QUESTÕES DE AGILIZAR TESTES.
     def delete(self, request):
@@ -153,6 +177,7 @@ class PizzariasViews(APIView):
                         if newPizzaria:
                             login = authenticate(username = email, password = password)
                             token = get_tokens_for_user(login)
+                            
                             dados = {
                                 "id": user.id,
                                 "token": token['access']
@@ -166,31 +191,55 @@ class PizzariasViews(APIView):
     
     def patch(self, request):
         filtro = request.query_params.get('id', None)
-        
         if filtro:
             try:
+                
                 user = User.objects.get(id = filtro)
-                pizzaria = Pizzarias.objects.get(id_id = filtro)    
+                cliente = Pizzarias.objects.get(id_id = filtro)    
+                
             except ObjectDoesNotExist:
                 return Response({"Message": "Usuário não encontrado."}, status = status.HTTP_404_NOT_FOUND)
             
             serializer = PacthPizzarias(data = request.data)
+            
             if serializer.is_valid():
+                
                 email = serializer.validated_data.get('email')
+                
                 if email is not None and email != "":
+                    
                     if User.objects.filter(email = email).exists():
                         return Response({"Message":"Email já cadastrado no banco de dados."}, status = status.HTTP_404_NOT_FOUND)
+                    
                     user.email = email
                     user.save()
                     
-                patching = PacthPizzarias(pizzaria, data = request.data, partial = True)
+                patching = PacthPizzarias(cliente, data = request.data, partial = True)
+                
                 if patching.is_valid():
+                    cnpj = serializer.validated_data['cnpj']
+                    if cnpj is not None and cnpj != "":
+                        if Check_cnpj(cnpj):
+                            if Pizzarias.objects.filter(cnpj = cnpj).exists():
+                                return Response({"Message":"CNPJ já em uso."}, status = status.HTTP_400_BAD_REQUEST)
+                            else:  
+                                patching.save()
+                                return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
                     patching.save()
                     return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
+                    
                 return Response(patching.errors, status = status.HTTP_400_BAD_REQUEST)
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-        
         return Response({"Message":"Filtro inválido ou não informado."}, status = status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request):
+        get_id = request.query_params.get('id',None)
+        try: 
+            dado = User.objects.filter(id= get_id).first()
+            dado.delete()
+            return Response(status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
             
             
             

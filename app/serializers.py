@@ -46,10 +46,21 @@ class ClienteSerializers(serializers.Serializer):
     
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PatchUsuarios(serializers.ModelSerializer):
-    class Meta:
-        model = Cliente
-        fields = '__all__'
+class PatchUsuarios(serializers.Serializer):
+    email = serializers.EmailField(required = False)
+    nome = serializers.CharField(required = False)
+    telefone = serializers.CharField(required = False)
+    cpf = serializers.CharField(required = False, allow_null = True, allow_blank = True)
+    data_nasc = serializers.DateField(required = False)
+
+    def update(self, instance, validated_data):
+        validated_data = {key: value for key, value in validated_data.items() if value is not None and value != ""}
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
         
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
@@ -100,16 +111,19 @@ class PizzariaSerializers(serializers.Serializer):
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class PacthPizzarias(serializers.Serializer):
-    email = serializers.EmailField()
-    nome = serializers.CharField()
-    telefone = serializers.CharField()
-    cnpj = serializers.CharField()
-    horario = serializers.CharField()
-    status = serializers.CharField()
+    email = serializers.EmailField(required = False)
+    nome = serializers.CharField(required = False)
+    telefone = serializers.CharField(required = False)
+    cnpj = serializers.CharField(required = False)
+    horario = serializers.CharField(required = False)
+    status = serializers.CharField(required = False)
     
 
     def update(self, instance, validated_data):
+        validated_data = {key: value for key, value in validated_data.items() if value is not None and value != ""}
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
         return instance

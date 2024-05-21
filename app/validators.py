@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from pycpfcnpj import cpfcnpj
 import requests
+from .models import Cliente, Pizzarias
 def CheckPassword(password):
     if len(password) < 8:
         return 'Senha muito curta'
@@ -51,7 +52,10 @@ def CheckCpf(cpf):
         return True
     else:
         if cpfcnpj.validate(str(cpf)):
-            return True
+            if Cliente.objects.filter(cpf = cpf).exists():
+                return False
+            else:
+                return True
         else:
             return False
         
@@ -60,7 +64,10 @@ def Check_cnpj(cnpj):
         return True
     else:
         if cpfcnpj.validate(str(cnpj)):
-            return True
+            if Pizzarias.objects.filter(cnpj = cnpj).exists():
+                return False
+            else:
+                return True
         else:
             return False
 
