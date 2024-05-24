@@ -53,3 +53,4 @@ class Pizzarias(models.Model):
     telefone = models.CharField(max_length = 11, unique = False, blank = False, null = False )
     cnpj = models.CharField(max_length = 14, unique = False, blank = True, null = False, default = None)
     horario = models.CharField(max_length = 100, blank = True, null = True)
+    
