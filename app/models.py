@@ -24,7 +24,7 @@ class UserManager(BaseUserManager):
         return user  
     
 class User (AbstractBaseUser, PermissionsMixin):
-    id = models.UUIDField(default = uuid4, primary_key= True, editable = False, unique = False,)
+    id = models.UUIDField(default = uuid4, primary_key= True, editable = False, unique = True,)
     isCliente = models.BooleanField(default = False, editable = False, null = False, blank = False)
     isGoogle = models.BooleanField(default = False, editable = False, null = False, blank = False)
     googleId = models.CharField(blank = True, null = False, max_length = 200)
@@ -54,3 +54,13 @@ class Pizzarias(models.Model):
     cnpj = models.CharField(max_length = 14, unique = False, blank = True, null = False, default = None)
     horario = models.CharField(max_length = 100, blank = True, null = True)
     
+class Endereco(models.Model):
+    id = models.UUIDField(default = uuid4, primary_key = True, editable = False, unique = True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    estado = models.CharField(max_length = 50)
+    cidade = models.CharField(max_length = 100)
+    bairro = models.CharField(max_length = 100)
+    rua = models.CharField(max_length = 150)
+    cep = models.CharField(max_length = 150, )
+    numero = models.IntegerField()
+    complemento = models.CharField(max_length = 200, blank = True, null = True)

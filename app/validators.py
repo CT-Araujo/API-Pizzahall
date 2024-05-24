@@ -73,7 +73,7 @@ def Check_cnpj(cnpj):
 
 def ValidaCep(cep):
     if len(str(cep)) < 8:
-        return Response({"Message":"CEP inválido, informe um CEP com 8 digitos numericos"}, status = status.HTTP_400_BAD_REQUEST)
+        return Response({"Message":"CEP inválido, informe um CEP com 8 digitos numéricos"}, status = status.HTTP_400_BAD_REQUEST)
     
     url = f"https://viacep.com.br/ws/{str(cep)}/json/"
     

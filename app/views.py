@@ -6,9 +6,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias
-from .models import Cliente, User, Pizzarias
-from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj
+from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers
+from .models import Cliente, User, Pizzarias, Endereco
+from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj, ValidaCep
 
 class ClienteViews(APIView):    
     def get(self, request):
@@ -290,3 +290,45 @@ class PizzariasViews(APIView):
             
             
             
+class EnderecoViews(APIView):
+    def get(self, request):
+        filtro = request.query_params.get('id', None)
+        if filtro:
+            print('com filtro')
+            
+            enderecos = Endereco.objects.filter(user = filtro)
+            if len(enderecos) == 0:
+                return Response({"Message":"Nenhum endereço encontrado neste usuário"}, status = status.HTTP_404_NOT_FOUND)
+            
+            serializer = EnderecoSerializers(enderecos, many = True)
+            return Response(serializer.data, status = status.HTTP_200_OK)
+        
+        dados = Endereco.objects.all()
+        serializer = EnderecoSerializers(dados, many = True)
+        print('sem filtro')
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
+    
+    def post(self, request):
+        serializer = EnderecoSerializers(data = request.data)
+        
+        if serializer.is_valid():
+            cep = serializer.validated_data['cep']
+            if ValidaCep(cep).status_code != 400:
+                if Endereco.objects.filter(user = serializer.validated_data['user']).count() < 2:
+                    new = Endereco.objects.create(
+                        user = serializer.validated_data['user'],
+                        estado = serializer.validated_data['estado'],
+                        cidade = serializer.validated_data['cidade'],
+                        bairro = serializer.validated_data['bairro'],
+                        rua = serializer.validated_data['rua'],
+                        cep = serializer.validated_data['cep'],
+                        numero = serializer.validated_data['numero'],
+                        complemento = serializer.validated_data['complemento']
+                    )
+                    
+                    new.save()
+                    return Response(serializer.data, status = status.HTTP_201_CREATED)
+                return Response({"Message":"Já existem 2 endereços cadastrados nesse usuário."}, status = status.HTTP_403_FORBIDDEN)
+            return (ValidaCep(cep))
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)

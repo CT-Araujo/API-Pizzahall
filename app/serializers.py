@@ -2,7 +2,7 @@ from rest_framework import serializers, status
 from django.contrib.auth import get_user_model
 Usermodel = get_user_model()
 from rest_framework.exceptions import ValidationError
-from .models import Cliente, Pizzarias 
+from .models import Cliente, Pizzarias, Endereco
 
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,7 +38,6 @@ class ClienteSerializers(serializers.Serializer):
             googleId = validated_data['googleId'],
             password = validated_data['password']
         )
-        
         
         user.save()
         return user
@@ -127,3 +126,10 @@ class PacthPizzarias(serializers.Serializer):
 
         instance.save()
         return instance
+    
+    
+
+class EnderecoSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Endereco
+        fields = '__all__'
