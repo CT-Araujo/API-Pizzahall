@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers
-from .models import Cliente, User, Pizzarias, Endereco
+from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers
+from .models import Cliente, User, Pizzarias, Endereco, Produtos
 from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj, ValidaCep
 
 class ClienteViews(APIView):    
@@ -288,8 +288,8 @@ class PizzariasViews(APIView):
         except ObjectDoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
             
-            
-            
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+           
 class EnderecoViews(APIView):
     def get(self, request):
         filtro = request.query_params.get('id', None)
@@ -332,3 +332,50 @@ class EnderecoViews(APIView):
                 return Response({"Message":"Já existem 2 endereços cadastrados nesse usuário."}, status = status.HTTP_403_FORBIDDEN)
             return (ValidaCep(cep))
         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////   
+    
+class ProdutosViews(APIView):
+    def get(self, request):
+        filtro = request.query_params.get('id', None) 
+
+        if filtro:
+            produto = Produtos.objects.filter(pizzaria_id = filtro)
+            serializers = ProdutosSerialziers(produto, many = True)
+            print(produto)
+            return Response(serializers.data, status = status.HTTP_200_OK) 
+        
+        dados = Produtos.objects.all()
+        serializers = ProdutosSerialziers(dados, many = True)
+        return Response(serializers.data, status = status.HTTP_200_OK)
+    
+    def post(self, request):
+        serializers = ProdutosSerialziers(data = request.data)
+        
+        if serializers.is_valid():
+            # Verificar se realmente é uma pizzaria
+            produto = Produtos.objects.create(
+                pizzaria = serializers.validated_data['pizzaria'],
+                nome = serializers.validated_data['nome'],
+                descricao = serializers.validated_data['descricao'],
+                preco = serializers.validated_data['preco']
+            )
+            
+            produto.save()
+            return Response(serializers.data, status.HTTP_201_CREATED)
+        return Response(serializers.erros, status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self,request):
+        filtro = request.query_params.get('id', None)
+        try:
+            produto = Produtos.objects.get(id = filtro)
+        except ObjectDoesNotExist:
+            return Response({"Message":"Produto não encontrado"}, status = status.HTTP_404_NOT_FOUND)
+        
+        seriliazers = ProdutosSerialziers(produto, partial = True, data = request. data)
+        if seriliazers.is_valid():
+            seriliazers.save()
+            return Response(seriliazers.data, status = status.HTTP_200_OK)
+        return Response(seriliazers.erros, status = status.HTTP_400_BAD_REQUEST)
+    

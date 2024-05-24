@@ -64,3 +64,10 @@ class Endereco(models.Model):
     cep = models.CharField(max_length = 150, )
     numero = models.IntegerField()
     complemento = models.CharField(max_length = 200, blank = True, null = True)
+
+class Produtos(models.Model):
+    id = models.UUIDField(default = uuid4, unique = True, primary_key = True)
+    pizzaria = models.ForeignKey(Pizzarias, on_delete = models.CASCADE)
+    nome = models.CharField(max_length = 40)
+    descricao = models.CharField(max_length = 200)
+    preco = models.FloatField()

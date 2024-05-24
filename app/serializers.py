@@ -2,7 +2,7 @@ from rest_framework import serializers, status
 from django.contrib.auth import get_user_model
 Usermodel = get_user_model()
 from rest_framework.exceptions import ValidationError
-from .models import Cliente, Pizzarias, Endereco
+from .models import Endereco, Produtos
 
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -132,4 +132,10 @@ class PacthPizzarias(serializers.Serializer):
 class EnderecoSerializers(serializers.ModelSerializer):
     class Meta:
         model = Endereco
+        fields = '__all__'
+        
+
+class ProdutosSerialziers(serializers.ModelSerializer):
+    class Meta:
+        model = Produtos
         fields = '__all__'
