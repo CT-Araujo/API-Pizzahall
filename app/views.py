@@ -13,18 +13,51 @@ from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj
 class ClienteViews(APIView):    
     def get(self, request):
         filtro = request.query_params.get('id', None)
+        address = request.query_params.get('address', None)
+        
         if filtro:
             cliente = Cliente.objects.get(id= filtro)
             user = cliente.id
-            dados = {
-                "id": user.id,
-                "email": user.email,
-                "isGoogle": user.isGoogle,
-                "nome": cliente.nome,
-                "telefone": cliente.telefone,
-                "cpf": cliente.cpf,
-                "dataNasc": cliente.dataNasc 
-            }
+            
+            if address == 'True':
+                endereco = Endereco.objects.filter(user_id = cliente.id)
+                
+                endereco_data = [{
+                    "id":e.id,
+                    "estado": e.estado,
+                    "cidade": e.cidade,
+                    "bairro": e.bairro,
+                    "rua": e.rua,
+                    "cep": e.cep,
+                    "numero": e.numero,
+                    "complemento": e.complemento
+                    } for e in endereco]
+                
+                user_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "isGoogle": user.isGoogle,
+                    "nome": cliente.nome,
+                    "telefone": cliente.telefone,
+                    "cpf": cliente.cpf,
+                    "dataNasc": cliente.dataNasc 
+                }
+                
+                dados = {
+                    "user": user_data,
+                    "endereco": endereco_data
+                }
+                
+            else:
+                dados = {
+                    "id": user.id,
+                    "email": user.email,
+                    "isGoogle": user.isGoogle,
+                    "nome": cliente.nome,
+                    "telefone": cliente.telefone,
+                    "cpf": cliente.cpf,
+                    "dataNasc": cliente.dataNasc 
+                }
     
             return Response(dados, status = status.HTTP_200_OK)
         
@@ -39,8 +72,7 @@ class ClienteViews(APIView):
             }for cliente in user]
         
         return Response(dados, status = status.HTTP_200_OK)
-
-
+    
 
     def post(self, request):
         serialized = ClienteSerializers(data = request.data)
@@ -166,6 +198,8 @@ class LoginView(APIView):
 class PizzariasViews(APIView):
     def get(self, request):
         filtro = request.query_params.get('id', None)
+        address = request.query_params.get('address', None)
+        
         if filtro:
             try:
                 pizzaria = Pizzarias.objects.get(id = filtro)
@@ -173,14 +207,42 @@ class PizzariasViews(APIView):
             except Pizzarias.DoesNotExist:
                 return Response({"Message":"Usuário não encontrado"}, status = status.HTTP_404_NOT_FOUND)
             
-            dados = {
+            if address == 'True':
+                print('foi')                
+                endereco = Endereco.objects.filter(user_id = user)
+                
+                endereco_data = [{
+                    "id":e.id,
+                    "estado": e.estado,
+                    "cidade": e.cidade,
+                    "bairro": e.bairro,
+                    "rua": e.rua,
+                    "cep": e.cep,
+                    "numero": e.numero,
+                    "complemento": e.complemento
+                    } for e in endereco]
+                
+                pizzaria_data = {
+                    "id": user.id,
+                    "nome": pizzaria.nome,
+                    "email": user.email,
+                    "telefone": pizzaria.telefone,
+                    "horario": pizzaria.horario
+                }
+                
+                dados = {
+                    "pizzaria":pizzaria_data,
+                    "endereco": endereco_data
+                }
+                return Response(dados, status = status.HTTP_200_OK)
+            
+            dados = {                
                 "id": user.id,
                 "nome": pizzaria.nome,
                 "email": user.email,
                 "telefone": pizzaria.telefone,
                 "horario": pizzaria.horario
             }
-            
             return Response(dados, status = status.HTTP_200_OK)
         
         dados = Pizzarias.objects.all()
@@ -339,7 +401,7 @@ class EnderecoViews(APIView):
 class ProdutosViews(APIView):
     def get(self, request):
         filtro = request.query_params.get('id', None) 
-
+    
         if filtro:
             produto = Produtos.objects.filter(pizzaria_id = filtro)
             serializers = ProdutosSerialziers(produto, many = True)
