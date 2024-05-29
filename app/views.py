@@ -16,8 +16,11 @@ class ClienteViews(APIView):
         address = request.query_params.get('address', None)
         
         if filtro:
-            cliente = Cliente.objects.get(id= filtro)
-            user = cliente.id
+            try:
+                cliente = Cliente.objects.get(id= filtro)
+                user = cliente.id
+            except Cliente.DoesNotExist:
+                return Response({"Message":"Usuário não encontrado."}, status = status.HTTP_404_NOT_FOUND)
             
             if address == 'True':
                 endereco = Endereco.objects.filter(user_id = cliente.id)
@@ -107,7 +110,7 @@ class ClienteViews(APIView):
                         
                         return Response(dados, status = status.HTTP_201_CREATED)
                     return Response({"Message":"Erro ao criar o usuário social."}, status = status.HTTP_400_BAD_REQUEST)
-        return Response(serialized.error_messages, status = status.HTTP_400_BAD_REQUEST)
+        return Response(serialized.errors, status = status.HTTP_400_BAD_REQUEST)
     
     
     def patch(self, request):
@@ -295,7 +298,7 @@ class PizzariasViews(APIView):
                             return Response(dados, status = status.HTTP_200_OK)
                 return Response({"Message":"CNPJ informado não é vaálido"}, status = status.HTTP_400_BAD_REQUEST)
             return Response(CheckPassword(password), status = status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.error_messages, status = status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
     
     
     def patch(self, request):

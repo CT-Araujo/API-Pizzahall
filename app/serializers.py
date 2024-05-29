@@ -50,7 +50,7 @@ class PatchUsuarios(serializers.Serializer):
     nome = serializers.CharField(required = False)
     telefone = serializers.CharField(required = False)
     cpf = serializers.CharField(required = False, allow_null = True, allow_blank = True)
-    data_nasc = serializers.DateField(required = False)
+    dataNasc = serializers.DateField(required = False)
 
     def update(self, instance, validated_data):
         validated_data = {key: value for key, value in validated_data.items() if value is not None and value != ""}
