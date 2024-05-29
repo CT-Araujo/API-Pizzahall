@@ -5,7 +5,7 @@ import requests
 from .models import Cliente, Pizzarias
 def CheckPassword(password):
     if len(password) < 8:
-        return 'Senha muito curta'
+        return {"Message":'Senha muito curta'}
     
     else:
         checks = {
@@ -33,7 +33,7 @@ def CheckPassword(password):
         if len(erros) >= 1:
             return erros
         else:
-            return Response(password, status = status.HTTP_200_OK)
+            return True
             
     
 from rest_framework_simplejwt.tokens import RefreshToken  

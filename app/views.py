@@ -84,7 +84,7 @@ class ClienteViews(APIView):
             email = serialized.validated_data.get('email')
             password = serialized.validated_data.get('password')
             
-            if CheckPassword(password).status_code == 200:
+            if CheckPassword(password) == True:
                 creating = serialized.create(serialized.validated_data)
                 
                 if creating:
@@ -110,6 +110,7 @@ class ClienteViews(APIView):
                         
                         return Response(dados, status = status.HTTP_201_CREATED)
                     return Response({"Message":"Erro ao criar o usuário social."}, status = status.HTTP_400_BAD_REQUEST)
+            return Response(CheckPassword(password), status = status.HTTP_400_BAD_REQUEST)
         return Response(serialized.errors, status = status.HTTP_400_BAD_REQUEST)
     
     
