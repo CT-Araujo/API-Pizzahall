@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
-from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers
-from .models import Cliente, User, Pizzarias, Endereco, Produtos
+from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers, PedidosSerializers
+from .models import Cliente, User, Pizzarias, Endereco, Produtos, Pedidos
 from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj, ValidaCep
 
 class ClienteViews(APIView):    
@@ -338,7 +338,7 @@ class PizzariasViews(APIView):
                                 patching.save()
                                 return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
                     patching.save()
-                    return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_202_ACCEPTED)
+                    return Response({"Message": "Dados alterados com sucesso."}, status = status.HTTP_201_CREATED)
                     
                 return Response(patching.errors, status = status.HTTP_400_BAD_REQUEST)
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
@@ -429,7 +429,7 @@ class ProdutosViews(APIView):
             
             produto.save()
             return Response(serializers.data, status.HTTP_201_CREATED)
-        return Response(serializers.erros, status.HTTP_400_BAD_REQUEST)
+        return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)
     
     def patch(self,request):
         filtro = request.query_params.get('id', None)
@@ -443,4 +443,68 @@ class ProdutosViews(APIView):
             seriliazers.save()
             return Response(seriliazers.data, status = status.HTTP_200_OK)
         return Response(seriliazers.erros, status = status.HTTP_400_BAD_REQUEST)
+
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////   
+
+
+class PedidosViews(APIView):
+    def get(self, request):
+        filtro = request.query_params.get('id', None)
+        filtro_cliente = request.query_params.get('cliente', None)
+        
+        if filtro:
+            print("erro")
+            try: 
+                pedido = Pedidos.objects.get(id = filtro)
+            except Pedidos.DoesNotExist:
+                return Response({"Message":"Pedido não encontrado."}, status = status.HTTP_404_NOT_FOUND)
+            dado = {
+                "id": pedido.id,
+                "cliente": pedido.cliente.id,
+                "pizzaria": pedido.pizzaria.id,
+                "produto":pedido.produtos,
+                "precoInicial":pedido.precoInicial,
+                "precoFinal":pedido.precoFinal
+            }
+            return Response(dado, status = status.HTTP_200_OK)
+        
+        if filtro_cliente:
+            try: 
+                pedido = Pedidos.objects.filter(cliente = filtro_cliente)
+            except Pedidos.DoesNotExist:
+                return Response({"Message":"Este usuário não possui nenhum pedido."}, status = status.HTTP_404_NOT_FOUND)
+            
+            
+            serializers = PedidosSerializers(pedido, many = True)
+            return Response(serializers.data, status.HTTP_200_OK)
+        
+        dados = Pedidos.objects.all()
+        serializers = PedidosSerializers(dados, many = True)
+        return Response(serializers.data, status = status.HTTP_200_OK)
     
+    
+    def post(self, request):
+        serializers = PedidosSerializers(data = request.data)
+        if serializers.is_valid():
+            try:
+                getpz = Pizzarias.objects.get(id = serializers.validated_data.get('pizzaria'))
+            except Pizzarias.DoesNotExist:
+                return Response({"Message":"Pizzaria não existe"},status = status.HTTP_404_NOT_FOUND)
+            
+            try:
+                getct = Cliente.objects.get(id = serializers.validated_data.get('cliente') )
+            except Cliente.DoesNotExist:
+                return Response({"Message":"Cliente não existe"}, status = status.HTTP_404_NOT_FOUND)
+            
+            novo = Pedidos.objects.create(
+                cliente = getct.id,
+                pizzaria = getpz.id,
+                produtos = serializers.validated_data['produtos'],
+                precoInicial = serializers.validated_data['precoInicial'],
+                precoFinal = serializers.validated_data['precoFinal']
+            )
+            
+            novo.save()
+            return Response(serializers.data, status.HTTP_201_CREATED)
+        return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)

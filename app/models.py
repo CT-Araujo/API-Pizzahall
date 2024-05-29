@@ -75,11 +75,10 @@ class Produtos(models.Model):
 
 class Pedidos(models.Model):
     id = models.UUIDField(default = uuid4, unique = True, primary_key = True)
-    cliente = models.ForeignKey(Cliente, on_delete = models.SET_NULL, null = True )
-    pizzaria = models.ForeignKey(Pizzarias, on_delete = models.SET_NULL, null = True)
+    cliente = models.ForeignKey(User, related_name='cliente_id' ,on_delete = models.SET_NULL, null = True )
+    pizzaria = models.ForeignKey(User, related_name='pizzaria' ,on_delete = models.SET_NULL, null = True)
     
     produtos = models.JSONField()
-    quantidade = models.IntegerField()
-    precoInical = models.FloatField()
+    precoInicial = models.FloatField()
     precoFinal = models.FloatField()
     
