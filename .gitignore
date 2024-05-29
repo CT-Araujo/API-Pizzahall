@@ -1,0 +1,4 @@
+./pz
+.vscode
+.db.sqlite3
+.env

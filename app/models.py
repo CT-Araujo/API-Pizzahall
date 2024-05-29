@@ -71,3 +71,15 @@ class Produtos(models.Model):
     nome = models.CharField(max_length = 40)
     descricao = models.CharField(max_length = 200)
     preco = models.FloatField()
+    
+
+class Pedidos(models.Model):
+    id = models.UUIDField(default = uuid4, unique = True, primary_key = True)
+    cliente = models.ForeignKey(Cliente, on_delete = models.SET_NULL, null = True )
+    pizzaria = models.ForeignKey(Pizzarias, on_delete = models.SET_NULL, null = True)
+    
+    produtos = models.JSONField()
+    quantidade = models.IntegerField()
+    precoInical = models.FloatField()
+    precoFinal = models.FloatField()
+    
