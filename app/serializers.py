@@ -145,3 +145,4 @@ class PedidosSerializers(serializers.ModelSerializer):
     class Meta:
         model = Pedidos
         fields = '__all__'
+        

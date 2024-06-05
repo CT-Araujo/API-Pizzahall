@@ -269,7 +269,7 @@ class PizzariasViews(APIView):
             cnpj = serializer.validated_data['cnpj']
             telefone = serializer.validated_data['telefone'] # Será usado para validar o telefone informado pelo usuário.
             
-            if CheckPassword(password).status_code == 200:
+            if CheckPassword(password) == True:
                 if Check_cnpj(cnpj):
                     new = serializer.create(serializer.validated_data)
                     
@@ -404,13 +404,18 @@ class EnderecoViews(APIView):
     
 class ProdutosViews(APIView):
     def get(self, request):
-        filtro = request.query_params.get('id', None) 
-    
+        filtro = request.query_params.get('pizzaria', None) 
+        unico = request.query_params.get('id', None)
         if filtro:
             produto = Produtos.objects.filter(pizzaria_id = filtro)
             serializers = ProdutosSerialziers(produto, many = True)
             print(produto)
-            return Response(serializers.data, status = status.HTTP_200_OK) 
+            return Response(serializers.data, status = status.HTTP_200_OK)
+        
+        if unico:
+            produto = Produtos.objects.filter(id = unico)
+            serializers = ProdutosSerialziers(produto, many = True)
+            return Response(serializers.data, status = status.HTTP_200_OK)
         
         dados = Produtos.objects.all()
         serializers = ProdutosSerialziers(dados, many = True)
@@ -509,3 +514,6 @@ class PedidosViews(APIView):
             novo.save()
             return Response(serializers.data, status.HTTP_201_CREATED)
         return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)
+    
+    
+    
