@@ -472,16 +472,17 @@ class PedidosViews(APIView):
         filtro_cliente = request.query_params.get('cliente', None)
         
         if filtro:
-            print("erro")
             try: 
                 pedido = Pedidos.objects.get(id = filtro)
+                if pedido:
+                    pizzaria = Pizzarias.objects.get(id = pedido.pizzaria.id)
             except Pedidos.DoesNotExist:
                 return Response({"Message":"Pedido não encontrado."}, status = status.HTTP_404_NOT_FOUND)
             dado = {
                 "id": pedido.id,
                 "cliente": pedido.cliente.id,
                 "pizzaria": pedido.pizzaria.id,
-                "nome_pizzaria": pedido.pizzaria.nome,
+                "nome_pizzaria": pizzaria.nome,
                 "produto":pedido.produtos,
                 "precoInicial":pedido.precoInicial,
                 "precoFinal":pedido.precoFinal,
