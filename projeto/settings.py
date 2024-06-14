@@ -125,11 +125,11 @@ LANGUAGE_CODE = 'pt-br'
 
 DATE_INPUT_FORMATS =  ['%d/%m/%Y']
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Recife'
 
-USE_I18N = True
+USE_I18N = False
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)

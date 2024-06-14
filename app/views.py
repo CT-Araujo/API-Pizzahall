@@ -406,6 +406,7 @@ class ProdutosViews(APIView):
     def get(self, request):
         filtro = request.query_params.get('pizzaria', None) 
         unico = request.query_params.get('id', None)
+        
         if filtro:
             produto = Produtos.objects.filter(pizzaria_id = filtro)
             serializers = ProdutosSerialziers(produto, many = True)
@@ -430,7 +431,7 @@ class ProdutosViews(APIView):
                 pizzaria = serializers.validated_data['pizzaria'],
                 nome = serializers.validated_data['nome'],
                 descricao = serializers.validated_data['descricao'],
-                preco = serializers.validated_data['preco']
+                venda = serializers.validated_data['venda']
             )
             
             produto.save()
@@ -446,6 +447,17 @@ class ProdutosViews(APIView):
         
         seriliazers = ProdutosSerialziers(produto, partial = True, data = request. data)
         if seriliazers.is_valid():
+            
+            if seriliazers.validated_data.get('venda') is not None and seriliazers.validated_data.get('venda') != '':
+                
+                inicial = produto.venda
+                add = seriliazers.validated_data.get('venda', [])
+    
+                inicial.extend(add)
+                produto.venda = inicial
+                produto.save()
+                del seriliazers.validated_data['venda']
+                
             seriliazers.save()
             return Response(seriliazers.data, status = status.HTTP_200_OK)
         return Response(seriliazers.erros, status = status.HTTP_400_BAD_REQUEST)
@@ -469,9 +481,11 @@ class PedidosViews(APIView):
                 "id": pedido.id,
                 "cliente": pedido.cliente.id,
                 "pizzaria": pedido.pizzaria.id,
+                "nome_pizzaria": pedido.pizzaria.nome,
                 "produto":pedido.produtos,
                 "precoInicial":pedido.precoInicial,
-                "precoFinal":pedido.precoFinal
+                "precoFinal":pedido.precoFinal,
+                "estado": pedido.estado
             }
             return Response(dado, status = status.HTTP_200_OK)
         
@@ -508,7 +522,8 @@ class PedidosViews(APIView):
                 pizzaria = getpz.id,
                 produtos = serializers.validated_data['produtos'],
                 precoInicial = serializers.validated_data['precoInicial'],
-                precoFinal = serializers.validated_data['precoFinal']
+                precoFinal = serializers.validated_data['precoFinal'],
+                estado = serializers.validated_data['estado']
             )
             
             novo.save()

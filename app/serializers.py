@@ -72,13 +72,6 @@ class PizzariaSerializers(serializers.Serializer):
      # Parte que será salva no User ( Responsável por validar os usuários em geral)
     
     confirm = serializers.CharField(max_length = 50, write_only =True)
-    password = serializers.CharField(max_length = 50, write_only =True)
-    email = serializers.EmailField(max_length = 100)
-    isGoogle = serializers.BooleanField(default = False)
-    googleId = serializers.CharField(max_length = 200,  allow_blank = True)
-    isCliente = serializers.BooleanField(default = False)
-    
-    # Parte que será salva no models Pizzaria.
     
     nome = serializers.CharField(max_length = 50)
     telefone = serializers.CharField()

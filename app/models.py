@@ -70,7 +70,7 @@ class Produtos(models.Model):
     pizzaria = models.ForeignKey(Pizzarias, on_delete = models.CASCADE)
     nome = models.CharField(max_length = 40)
     descricao = models.CharField(max_length = 200)
-    preco = models.FloatField()
+    opcoes = models.JSONField(default = dict)
     
 
 class Pedidos(models.Model):
@@ -78,6 +78,8 @@ class Pedidos(models.Model):
     cliente = models.ForeignKey(User, related_name='cliente_id' ,on_delete = models.SET_NULL, null = True )
     pizzaria = models.ForeignKey(User, related_name='pizzaria' ,on_delete = models.SET_NULL, null = True)
     
+    estado = models.CharField(max_length = 30, default = 'Pendente')
+    created = models.DateTimeField(auto_now=True)
     produtos = models.JSONField()
     precoInicial = models.FloatField()
     precoFinal = models.FloatField()

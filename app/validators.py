@@ -3,38 +3,28 @@ from rest_framework.response import Response
 from pycpfcnpj import cpfcnpj
 import requests
 from .models import Cliente, Pizzarias
-def CheckPassword(password):
-    if len(password) < 8:
-        return {"Message":'Senha muito curta'}
+
+
+def CheckPassword(senha):
+    if len(str(senha)) < 8:
+        return "Senha muito curta"
     
+    maiusculas = sum(1 for s in senha if s.isupper())
+    minusculas = sum(1 for s in senha if s.islower())
+    numericos = sum(1 for s in senha if s.isnumeric())
+            
+    result = {"maiusculo":maiusculas, "minúsculo":minusculas, "numérico":numericos}
+    
+    erros = []
+    for c, v in result.items():
+        if v == 0:
+            erros.append(f"Senha deve conter pelo menos um caractere {c}")
+    if len(erros) == 0:
+        return True
     else:
-        checks = {
-            "min": False,
-            "mai": False,
-            "num": False
-        }
-        for p in password:
-            if str(p).islower():
-                checks['min'] = True
-            if str(p).isupper():
-                checks['mai'] = True
-            if str(p).isnumeric():
-                checks['num'] = True
+        return erros
         
-        erros = []
         
-        if checks['min'] == False:
-            erros.append({"Message":"A senha deve conter pelo menos um caracter minusculo."})
-        if checks['mai'] == False:
-            erros.append({"Message":"A senha deve conter pelo menos um caracter maiusculo."})
-        if checks['num'] == False:
-            erros.append({"Message":"A senha deve conter pelo menos um caracter númerico."})
-            
-        if len(erros) >= 1:
-            return erros
-        else:
-            return True
-            
     
 from rest_framework_simplejwt.tokens import RefreshToken  
 
