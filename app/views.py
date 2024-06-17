@@ -1,14 +1,19 @@
-import json
 from django.contrib.auth import authenticate
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+import requests
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 
+from google.oauth2 import id_token
+
+#from projeto.settings import GOOGLE_OAUTH2_CLIENT_ID
 from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers, PedidosSerializers
 from .models import Cliente, User, Pizzarias, Endereco, Produtos, Pedidos
 from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj, ValidaCep
+from .transactions import PagamentoPix
+
 
 class ClienteViews(APIView):    
     def get(self, request):
@@ -198,6 +203,39 @@ class LoginView(APIView):
 
 #////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+'''class GoogleAuthenticationView(APIView):
+    def post(self, request):
+        serializers = GoogleSerializers( data = request.data)
+        if serializers.is_valid():
+            token = serializers.validated_data.get('token_google')  # Supondo que o token seja enviado no corpo da solicitação.
+
+            if not token:
+                return Response({'error': 'Token não fornecido.'}, status=400)
+
+            try:
+                id_info = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH2_CLIENT_ID)
+                password = id_info['sub']
+                email = id_info.get('email')
+                
+                user = serializers.create(serializers.validated_data)
+                if user:
+                    token = get_tokens_for_user(email, password)
+                    user_data = User.objects.get(email = email)
+                    if token:
+                        login = {
+                            "token": token,
+                            "id": user_data.id,
+                        }
+                        return Response(login, status = status.HTTP_201_CREATED)
+                    return Response({"message":"Erro na criação do token"}, status = status.HTTP_400_BAD_REQUEST)
+                return Response(status = status.HTTP_401_UNAUTHORIZED)  
+
+            except ValueError as e:
+                return Response({'error': f'Token inválido: {str(e)}'}, status=400)
+        return Response(status = status.HTTP_400_BAD_REQUEST)        
+    '''
+
+#////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class PizzariasViews(APIView):
     def get(self, request):
@@ -431,7 +469,7 @@ class ProdutosViews(APIView):
                 pizzaria = serializers.validated_data['pizzaria'],
                 nome = serializers.validated_data['nome'],
                 descricao = serializers.validated_data['descricao'],
-                venda = serializers.validated_data['venda']
+                opcoes = serializers.validated_data['opcoes']
             )
             
             produto.save()
@@ -486,7 +524,7 @@ class PedidosViews(APIView):
                 "produto":pedido.produtos,
                 "precoInicial":pedido.precoInicial,
                 "precoFinal":pedido.precoFinal,
-                "estado": pedido.estado
+                "status": pedido.status
             }
             return Response(dado, status = status.HTTP_200_OK)
         
@@ -513,22 +551,41 @@ class PedidosViews(APIView):
             except Pizzarias.DoesNotExist:
                 return Response({"Message":"Pizzaria não existe"},status = status.HTTP_404_NOT_FOUND)
             
+            if getpz:
+                try:
+                    endereco = Endereco.objects.get(user = getpz.id)
+                
+                except Endereco.DoesNotExist:
+                    return Response({"Message":"Pizzaria informada não possui um endereço cadastrado"})
+            
             try:
                 getct = Cliente.objects.get(id = serializers.validated_data.get('cliente') )
             except Cliente.DoesNotExist:
                 return Response({"Message":"Cliente não existe"}, status = status.HTTP_404_NOT_FOUND)
             
+            precoFinal = serializers.validated_data['precoFinal']
             novo = Pedidos.objects.create(
                 cliente = getct.id,
                 pizzaria = getpz.id,
                 produtos = serializers.validated_data['produtos'],
                 precoInicial = serializers.validated_data['precoInicial'],
-                precoFinal = serializers.validated_data['precoFinal'],
-                estado = serializers.validated_data['estado']
+                precoFinal = precoFinal,
+                status = serializers.validated_data['status']   
             )
             
             novo.save()
-            return Response(serializers.data, status.HTTP_201_CREATED)
+            
+            if novo:
+                import math
+
+                if '.' in str(precoFinal) or ',' in str(precoFinal):
+                    precoFinal = float(str(precoFinal).replace(',', '.'))
+                    total = int(precoFinal * 100)
+                else:
+                    total = int(precoFinal) * 100
+
+                pagamento = PagamentoPix(getpz.nome, getpz.telefone, endereco.cidade, total)
+                return Response(pagamento, status = status.HTTP_200_OK)    
         return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)
     
     

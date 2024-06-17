@@ -50,9 +50,10 @@ class Pizzarias(models.Model):
     id = models.OneToOneField(User, on_delete=models.CASCADE, primary_key = True)
     nome = models.CharField(max_length = 50, blank = False, null = False)
     status = models.CharField(max_length = 20, default = 'Fechado')
-    telefone = models.CharField(max_length = 11, unique = False, blank = False, null = False )
+    telefone = models.CharField(max_length = 15, unique = False, blank = False, null = False )
     cnpj = models.CharField(max_length = 14, unique = False, blank = True, null = False, default = None)
     horario = models.CharField(max_length = 100, blank = True, null = True)
+
     
 class Endereco(models.Model):
     id = models.UUIDField(default = uuid4, primary_key = True, editable = False, unique = True)
@@ -78,7 +79,7 @@ class Pedidos(models.Model):
     cliente = models.ForeignKey(User, related_name='cliente_id' ,on_delete = models.SET_NULL, null = True )
     pizzaria = models.ForeignKey(User, related_name='pizzaria' ,on_delete = models.SET_NULL, null = True)
     
-    estado = models.CharField(max_length = 30, default = 'Pendente')
+    status = models.CharField(max_length = 30, default = 'Pendente')
     created = models.DateTimeField(auto_now=True)
     produtos = models.JSONField()
     precoInicial = models.FloatField()
