@@ -516,6 +516,7 @@ class PedidosViews(APIView):
                     pizzaria = Pizzarias.objects.get(id = pedido.pizzaria.id)
             except Pedidos.DoesNotExist:
                 return Response({"Message":"Pedido não encontrado."}, status = status.HTTP_404_NOT_FOUND)
+            
             dado = {
                 "id": pedido.id,
                 "cliente": pedido.cliente.id,
@@ -530,17 +531,38 @@ class PedidosViews(APIView):
         
         if filtro_cliente:
             try: 
-                pedido = Pedidos.objects.filter(cliente = filtro_cliente)
+                pedidos = Pedidos.objects.filter(cliente = filtro_cliente)
             except Pedidos.DoesNotExist:
                 return Response({"Message":"Este usuário não possui nenhum pedido."}, status = status.HTTP_404_NOT_FOUND)
             
-            
-            serializers = PedidosSerializers(pedido, many = True)
-            return Response(serializers.data, status.HTTP_200_OK)
+            todos = [{
+                "id": pedido.id,
+                "cliente": pedido.cliente.id,
+                "pizzaria": pedido.pizzaria.id,
+                "nome_pizzaria": Pizzarias.objects.get(id = pedido.pizzaria.id).nome,
+                "produto":pedido.produtos,
+                "precoInicial":pedido.precoInicial,
+                "precoFinal":pedido.precoFinal,
+                "status": pedido.status
+            } for pedido in pedidos]
+        
+            return Response({"Dados": todos}, status.HTTP_200_OK)
+        
+        
         
         dados = Pedidos.objects.all()
-        serializers = PedidosSerializers(dados, many = True)
-        return Response(serializers.data, status = status.HTTP_200_OK)
+        todos = [{
+                "id": pedido.id,
+                "cliente": pedido.cliente.id,
+                "pizzaria": pedido.pizzaria.id,
+                "nome_pizzaria": Pizzarias.objects.get(id = pedido.pizzaria.id).nome,
+                "produto":pedido.produtos,
+                "precoInicial":pedido.precoInicial,
+                "precoFinal":pedido.precoFinal,
+                "status": pedido.status
+            } for pedido in dados]
+
+        return Response({"Dados":todos}, status = status.HTTP_200_OK)
     
     
     def post(self, request):
