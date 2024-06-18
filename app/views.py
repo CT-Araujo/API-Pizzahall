@@ -525,7 +525,8 @@ class PedidosViews(APIView):
                 "produto":pedido.produtos,
                 "precoInicial":pedido.precoInicial,
                 "precoFinal":pedido.precoFinal,
-                "status": pedido.status
+                "status": pedido.status,
+                "created": pedido.created
             }
             return Response(dado, status = status.HTTP_200_OK)
         
