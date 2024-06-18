@@ -643,7 +643,6 @@ class PagamentosViews(APIView):
                 total = int(precoFinal * 100)
                 pagamento = PagamentoPix(str(pz.nome), str(pz.telefone), str(endereco.cidade), str(total))
 
-                print(pagamento)
             else:
                 total = int(precoFinal) * 100
                 
