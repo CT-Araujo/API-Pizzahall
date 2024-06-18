@@ -139,3 +139,8 @@ class PedidosSerializers(serializers.ModelSerializer):
         model = Pedidos
         fields = '__all__'
         
+        
+class PagamentosSerializers(serializers.Serializer):
+    id = serializers.CharField(max_length = 200)
+    
+        

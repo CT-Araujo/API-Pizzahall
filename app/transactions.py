@@ -15,7 +15,7 @@ def PagamentoPix(nome, chave, cidade, valor):
     stringImage = img.to_string(encoding='unicode')
     encoded_svg = base64.b64encode(stringImage.encode('utf-8')).decode('utf-8')
     
-    return {'payload': payload, 'svg': encoded_svg}
+    return {'payload': payload, 'svg': encoded_svg,"nome": nome}
     
     
 

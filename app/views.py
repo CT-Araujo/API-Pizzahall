@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from google.oauth2 import id_token
 
 #from projeto.settings import GOOGLE_OAUTH2_CLIENT_ID
-from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers, PedidosSerializers
+from .serializers import ClienteSerializers, LoginSerializers, PatchUsuarios, PizzariaSerializers,PacthPizzarias, EnderecoSerializers, ProdutosSerialziers, PedidosSerializers, PagamentosSerializers
 from .models import Cliente, User, Pizzarias, Endereco, Produtos, Pedidos
 from .validators import CheckPassword, get_tokens_for_user, CheckCpf, Check_cnpj, ValidaCep
 from .transactions import PagamentoPix
@@ -599,17 +599,55 @@ class PedidosViews(APIView):
             novo.save()
             
             if novo:
-                import math
-
-                if '.' in str(precoFinal) or ',' in str(precoFinal):
-                    precoFinal = float(str(precoFinal).replace(',', '.'))
-                    total = int(precoFinal * 100)
-                else:
-                    total = int(precoFinal) * 100
-
-                pagamento = PagamentoPix(getpz.nome, getpz.telefone, endereco.cidade, total)
-                return Response(pagamento, status = status.HTTP_200_OK)    
+                dados = {
+                    "id":novo.id,
+                    "cliente": novo.cliente.id,
+                    "pizzaria": novo.pizzaria.id,
+                    "produtos": novo.produtos,
+                    "precoInicial": novo.precoInicial,
+                    "precoFinal": novo.precoFinal,
+                    "status": novo.status
+                }
+                return Response(dados, status = status.HTTP_200_OK)    
         return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)
     
     
+
+class PagamentosViews(APIView):
+    def post(self, request):
+        serializers = PagamentosSerializers(data = request.data)
+        if serializers.is_valid():
+            try:
+                pedido = Pedidos.objects.get(id = serializers.validated_data['id'])
+                
+            except Pedidos.DoesNotExist:
+                return Response({"Message":"Pedido não encontrado."}, status.HTTP_404_NOT_FOUND)
+            
+            if pedido:
+                try:
+                    pz = Pizzarias.objects.get(id = pedido.pizzaria)
+                except Pizzarias.DoesNotExist:
+                    return Response({"Message":"Pizzaria não encontrada"}, status = status.HTTP_404_NOT_FOUND)
+                
+                if pz:
+                    try:
+                        endereco = Endereco.objects.get(user = pz.id)
+                    
+                    except Endereco.DoesNotExist:
+                        return Response({"Message":"Pizzaria informada não possui um endereço cadastrado"})
+
+            
+            precoFinal = pedido.precoFinal
+            if '.' in str(precoFinal) or ',' in str(precoFinal):
+                precoFinal = float(str(precoFinal).replace(',', '.'))
+                total = int(precoFinal * 100)
+                pagamento = PagamentoPix(str(pz.nome), str(pz.telefone), str(endereco.cidade), str(total))
+
+                print(pagamento)
+            else:
+                total = int(precoFinal) * 100
+                
+                
+            return Response(pagamento, status = status.HTTP_200_OK)
+        return Response({"Message":"Serializer invalido"}, status = status.HTTP_400_BAD_REQUEST)
     
