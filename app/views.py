@@ -608,7 +608,7 @@ class PedidosViews(APIView):
                     "precoFinal": novo.precoFinal,
                     "status": novo.status
                 }
-                return Response(dados, status = status.HTTP_200_OK)    
+                return Response(dados, status = status.HTTP_201_CREATED)    
         return Response(serializers.errors, status.HTTP_400_BAD_REQUEST)
     
     
